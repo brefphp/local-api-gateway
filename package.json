@@ -1,8 +1,12 @@
 {
   "name": "local-api-gateway",
   "version": "1.0.0",
-  "description": "",
+  "description": "Run API Gateway locally against your Docker Lambda functions",
+  "repository": "brefphp/local-api-gateway",
   "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc && docker build -t bref/local-api-gateway ."
   },
