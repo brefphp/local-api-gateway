@@ -14,7 +14,7 @@ curl -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d
 
 That sucks.
 
-If you have a Lambda running behind API Gateway, you probably just want to run it locally in Docker **and access it via HTTP**. This project does that.
+If you have a Lambda running behind API Gateway, you probably just want to run it locally in Docker **and access it via HTTP**… like any other HTTP application. This project does that.
 
 ## Usage
 
@@ -69,3 +69,23 @@ services:
             
     # ...
 ```
+
+## FAQ
+
+### This vs Serverless Offline
+
+[Serverless Offline](https://www.serverless.com/plugins/serverless-offline) doesn't work with Bref, and doesn't work great if you run your Lambda in containers.
+
+This project will be useful to you if you are in that case, or simply if you don't use Serverless Framework.
+
+However, if you use Serverless Framework with JS, Python or another supported language, Serverless Offline is probably a better choice.
+
+### Does this support API Gateway routes?
+
+No. To discover routes (and how they map to Lambda functions), we would have to parse CloudFormation templates/serverless.yml/CDK files/Terraform files/Pulumi files/etc. That's too much work for now :)
+
+This project is mostly useful for people running web frameworks (like Laravel, Symfony, etc.) in Lambda, and don't use API Gateway's routing.
+
+### Does this support API Gateway features?
+
+No, this is a very simple HTTP server. It does not support API Gateway features like CORS, authorizers, etc.
