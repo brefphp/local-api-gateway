@@ -1,5 +1,5 @@
 {
-  "name": "local-api-gateway",
+  "name": "@bref.sh/local-api-gateway",
   "version": "1.0.0",
   "description": "Run API Gateway locally against your Docker Lambda functions",
   "repository": "brefphp/local-api-gateway",
@@ -8,7 +8,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && docker build -t bref/local-api-gateway ."
+    "build": "tsc && docker build -t bref/local-api-gateway .",
+    "docker-publish": "npm run build && docker push bref/local-api-gateway"
   },
   "author": "Matthieu Napoli",
   "license": "MIT",
