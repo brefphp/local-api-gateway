@@ -12,9 +12,9 @@ docker run --rm -it -p 8080:8080 -v $(PWD):/var/task bref/php-80-fpm public/inde
 curl -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{ http event goes here }'
 ```
 
-That sucks.
+That sucks 👎
 
-If you have a Lambda running behind API Gateway, you probably just want to run it locally in Docker **and access it via HTTP**… like any other HTTP application. This project does that.
+If you use Lambda + API Gateway, you probably just want **to access your app via HTTP**… like any other HTTP application. This project does that.
 
 ## Usage
 
