@@ -2,7 +2,7 @@ This project lets you run HTTP Lambda applications locally.
 
 ## Why
 
-AWS Lambda containers (like Bref containers) can run locally, but they must be invoked via the [Runtime Interface Emulator API](https://docs.aws.amazon.com/lambda/latest/dg/images-test.html)), which is not practical. Here's an example with `curl`:
+AWS Lambda containers (like Bref containers) can run locally, but they must be invoked via the [Runtime Interface Emulator API](https://docs.aws.amazon.com/lambda/latest/dg/images-test.html), which is not practical. Here's an example with `curl`:
 
 ```bash
 # Run your Lambda function
