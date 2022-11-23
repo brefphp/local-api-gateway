@@ -32,6 +32,7 @@ Example of `docker-compose.yml`:
 version: "3.5"
 
 services:
+  
     # This container runs API Gateway locally
     web:
         image: bref/local-api-gateway
@@ -39,6 +40,7 @@ services:
         environment:
             # <host>:<port> -> the host here is "php" because that's the name of the second container
             TARGET: 'php:8080'
+            
     # Example of container runs AWS Lambda locally
     php:
         image: bref/php-80-fpm
