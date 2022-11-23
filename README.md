@@ -5,8 +5,14 @@ This project lets you run HTTP Lambda applications locally.
 AWS Lambda containers (like Bref containers) can run locally, but they must be invoked via the [Runtime Interface Emulator API](https://docs.aws.amazon.com/lambda/latest/dg/images-test.html)), which is not practical. Here's an example with `curl`:
 
 ```bash
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{ http event goes here }'
+# Run your Lambda function
+docker run --rm -it -p 8080:8080 -v $(PWD):/var/task bref/php-80-fpm public/index.php
+
+# Call your function
+curl -XPOST "http://localhost:8080/2015-03-31/functions/function/invocations" -d '{ http event goes here }'
 ```
+
+That sucks.
 
 If you have a Lambda running behind API Gateway, you probably just want to run it locally in Docker **and access it via HTTP**. This project does that.
 
