@@ -41,7 +41,7 @@ services:
             # <host>:<port> -> the host here is "php" because that's the name of the second container
             TARGET: 'php:8080'
             
-    # Example of container runs AWS Lambda locally
+    # Example of container running AWS Lambda locally
     php:
         image: bref/php-80-fpm
         # The command should contain the Lambda handler
