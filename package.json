@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc && docker build -t bref/local-api-gateway .",
     "docker-publish": "npm run build && docker push bref/local-api-gateway",
+    "lint": "eslint .",
     "test": "vitest"
   },
   "author": "Matthieu Napoli",
