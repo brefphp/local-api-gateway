@@ -26,6 +26,19 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     res.status(500).send('Something broke!');
 });
 
+// Populate `req.body` with the raw body content (string)
+// See https://stackoverflow.com/a/18710277/245552
+app.use(function (req, res, next) {
+    req.body = '';
+    req.setEncoding('utf8');
+    req.on('data', function (chunk) {
+        req.body += chunk;
+    });
+    req.on('end', function () {
+        next();
+    });
+});
+
 app.all('*', async (req: Request, res: Response, next) => {
     const event = httpRequestToEvent(req);
 
