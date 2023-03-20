@@ -1,4 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import queue from 'express-queue';
 import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/client-lambda';
 import { httpRequestToEvent } from './apiGateway';
@@ -9,6 +12,25 @@ const port = 8000;
 if (process.env.DOCUMENT_ROOT) {
     app.use(express.static(process.env.DOCUMENT_ROOT));
 }
+
+// Prevent parallel requests as Lambda RIE can only handle one request at a time
+// The solution here is to use a request "queue":
+// incoming requests are queued until the previous request is finished.
+// See https://github.com/brefphp/bref/issues/1471
+const requestQueue = queue({
+    // max requests to process simultaneously
+    activeLimit: 1,
+    // max requests in queue until reject (-1 means do not reject)
+    queuedLimit: process.env.DEV_MAX_REQUESTS_IN_PARALLEL ?? 10,
+    // handler to call when queuedLimit is reached (see below)
+    rejectHandler: (req: Request, res: Response) => {
+        res.status(503);
+        res.send(
+            'Too many requests in parallel, set the `DEV_MAX_REQUESTS_IN_PARALLEL` environment variable to increase the limit'
+        );
+    },
+});
+app.use(requestQueue);
 
 const target = process.env.TARGET;
 if (!target) {
@@ -52,6 +74,8 @@ app.all('*', async (req: Request, res: Response, next) => {
             })
         );
     } catch (e) {
+        res.send(JSON.stringify(e));
+
         return next(e);
     }
 
