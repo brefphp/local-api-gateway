@@ -1,0 +1,13 @@
+version: "3.5"
+
+services:
+    app:
+        build:
+            context: .
+        ports: [ '8000:8000' ]
+        volumes:
+            - .:/var/task
+            - ./bootstrap.sh:/var/runtime/bootstrap
+            - ../..:/local-api-gateway
+        entrypoint: /var/task/entrypoint.sh
+        command: [""]
