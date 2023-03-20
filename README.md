@@ -91,3 +91,9 @@ This project is mostly useful for people running web frameworks (like Laravel, S
 ### Does this support API Gateway features?
 
 No, this is a very simple HTTP server. It does not support API Gateway features like CORS, authorizers, etc.
+
+### How are parallel requests handled?
+
+The Lambda RIE does not support parallel requests. This project handles them by "queueing" requests. If a request is already being processed, the next request will be queued and processed when the first request is done.
+
+This works up to 10 requests in parallel by default. You can change this limit by setting the `DEV_MAX_REQUESTS_IN_PARALLEL` environment variable.
