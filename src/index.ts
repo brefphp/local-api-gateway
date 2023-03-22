@@ -120,3 +120,5 @@ type LambdaInvokeError = {
     errorType: string;
     errorMessage: string;
 };
+
+export default app;
