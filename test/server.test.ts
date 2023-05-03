@@ -16,6 +16,7 @@ describe('server', () => {
             Payload: Buffer.from(
                 JSON.stringify({
                     statusCode: 200,
+                    cookies: ['cookie1=a', 'cookie2=b'],
                 })
             ),
         });
@@ -57,6 +58,11 @@ describe('server', () => {
             routeKey: '$default',
             stageVariables: {},
         });
+    });
+
+    it('sets cookies', async () => {
+        const response = await request(app).post('/');
+        expect(response.header['set-cookie']).toEqual(['cookie1=a', 'cookie2=b']);
     });
 
     it('forwards the HTTP method', async () => {

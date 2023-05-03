@@ -27,6 +27,8 @@ jobs:
                   key: ${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('**/package.json') }}
             - run: npm i
             - run: npm test
+              env:
+                  TARGET: 'localhost:9000'
 
     lint:
         name: Lint
