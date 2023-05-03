@@ -100,9 +100,7 @@ app.all('*', async (req: Request, res: Response, next) => {
     }
     // Set cookies in header
     if (lambdaResponse.cookies) {
-        for (const cookie of lambdaResponse.cookies) {
-            res.setHeader('Set-Cookie', cookie);
-        }
+        res.setHeader('Set-Cookie', lambdaResponse.cookies);
     }
 
     let body = lambdaResponse.body;
