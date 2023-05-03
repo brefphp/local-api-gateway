@@ -1,6 +1,6 @@
 {
   "name": "@bref.sh/local-api-gateway",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Run API Gateway locally against your Docker Lambda functions",
   "repository": "brefphp/local-api-gateway",
   "main": "dist/index.js",
