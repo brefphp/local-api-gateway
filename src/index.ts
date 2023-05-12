@@ -105,9 +105,10 @@ app.all('*', async (req: Request, res: Response, next) => {
 
     let body = lambdaResponse.body;
     if (body && lambdaResponse.isBase64Encoded) {
-        body = Buffer.from(body, 'base64').toString('utf-8');
+        res.end(Buffer.from(body, 'base64'));
+    } else {
+        res.end(body);
     }
-    res.send(body);
 });
 
 app.listen(port, () => {
