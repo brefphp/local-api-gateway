@@ -40,7 +40,12 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
         rawPath: request.path,
         rawQueryString: url.parse(request.originalUrl).query ?? '',
         cookies: request.cookies,
-        headers,
+        headers: {
+            'x-forwarded-proto': request.protocol,
+            'x-forwarded-port': `${request.socket.localPort}`,
+            'x-forwarded-for': request.ip,
+            ...headers,
+        },
         queryStringParameters,
         body: request.body,
         pathParameters: {},
