@@ -111,9 +111,18 @@ app.all('*', async (req: Request, res: Response, next) => {
     }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`⚡️ Server is running at http://localhost:${port}`);
 });
+
+const shutdown = () => {
+    console.log('Shutting down server...');
+    server.close(() => {
+        console.log('Server shutdown.');
+    });
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 type LambdaInvokeError = {
     errorType: string;

@@ -14,4 +14,4 @@ WORKDIR /var/task
 
 EXPOSE 8000
 
-CMD node /app/dist/index.js
+CMD ["node", "/app/dist/index.js"]
