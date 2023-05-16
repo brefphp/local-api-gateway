@@ -1,6 +1,6 @@
 {
   "name": "@bref.sh/local-api-gateway",
-  "version": "1.0.8",
+  "version": "1.0.7",
   "description": "Run API Gateway locally against your Docker Lambda functions",
   "repository": "brefphp/local-api-gateway",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc && docker buildx build --load -t bref/local-api-gateway .",
-    "docker-publish": "npm run build && docker buildx build --push --platform linux/amd64,linux/arm64/v8 -t bref/local-api-gateway .",
+    "docker-publish": "npm run build && docker buildx build --push --platform linux/amd64,linux/arm64 -t bref/local-api-gateway .",
     "lint": "eslint .",
     "test": "vitest"
   },
