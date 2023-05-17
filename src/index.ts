@@ -111,7 +111,7 @@ app.all('*', async (req: Request, res: Response, next) => {
     }
 });
 
-const server = app.listen(port, () => {
+export const server = app.listen(port, () => {
     console.log(`⚡️ Server is running at http://localhost:${port}`);
 });
 
@@ -128,5 +128,3 @@ type LambdaInvokeError = {
     errorType: string;
     errorMessage: string;
 };
-
-export default app;
