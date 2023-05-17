@@ -5,7 +5,7 @@ import { InvocationResponse, LambdaClient, ServiceInputTypes, ServiceOutputTypes
 
 process.env.TARGET = 'localhost:9000';
 
-import app from '../src/index';
+import { server as app } from '../src/index';
 
 describe('server', () => {
     let lambda: AwsStub<ServiceInputTypes, ServiceOutputTypes>;
@@ -33,6 +33,9 @@ describe('server', () => {
             headers: {
                 'accept-encoding': 'gzip, deflate',
                 connection: 'close',
+                'x-forwarded-for': '127.0.0.1',
+                'x-forwarded-port': '8000',
+                'x-forwarded-proto': 'http',
             },
             isBase64Encoded: false,
             pathParameters: {},
@@ -48,7 +51,7 @@ describe('server', () => {
                     method: 'GET',
                     path: '/',
                     protocol: 'http',
-                    sourceIp: '::ffff:127.0.0.1',
+                    sourceIp: '127.0.0.1',
                     userAgent: '',
                 },
                 requestId: 'id',
@@ -86,6 +89,9 @@ describe('server', () => {
         expect(getEventFromLambdaApiCall(lambda, 0).headers).toStrictEqual({
             'accept-encoding': 'gzip, deflate',
             connection: 'close',
+            'x-forwarded-for': '127.0.0.1',
+            'x-forwarded-port': '8000',
+            'x-forwarded-proto': 'http',
             'x-my-header': 'foo',
         });
     });
