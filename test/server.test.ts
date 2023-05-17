@@ -33,7 +33,7 @@ describe('server', () => {
             headers: {
                 'accept-encoding': 'gzip, deflate',
                 connection: 'close',
-                'x-forwarded-for': '::ffff:127.0.0.1',
+                'x-forwarded-for': '127.0.0.1',
                 'x-forwarded-port': '8000',
                 'x-forwarded-proto': 'http',
             },
@@ -51,7 +51,7 @@ describe('server', () => {
                     method: 'GET',
                     path: '/',
                     protocol: 'http',
-                    sourceIp: '::ffff:127.0.0.1',
+                    sourceIp: '127.0.0.1',
                     userAgent: '',
                 },
                 requestId: 'id',
@@ -89,7 +89,7 @@ describe('server', () => {
         expect(getEventFromLambdaApiCall(lambda, 0).headers).toStrictEqual({
             'accept-encoding': 'gzip, deflate',
             connection: 'close',
-            'x-forwarded-for': '::ffff:127.0.0.1',
+            'x-forwarded-for': '127.0.0.1',
             'x-forwarded-port': '8000',
             'x-forwarded-proto': 'http',
             'x-my-header': 'foo',
