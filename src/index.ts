@@ -7,7 +7,8 @@ import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from
 import { httpRequestToEvent } from './apiGateway';
 
 const app = express();
-const port = 8000;
+const address = process.env.LISTEN_ADDRESS || '0.0.0.0';
+const port = Number(process.env.LISTEN_PORT) || 8000;
 
 if (process.env.DOCUMENT_ROOT) {
     app.use(express.static(process.env.DOCUMENT_ROOT));
@@ -111,8 +112,9 @@ app.all('*', async (req: Request, res: Response, next) => {
     }
 });
 
-export const server = app.listen(port, () => {
-    console.log(`⚡️ Server is running at http://localhost:${port}`);
+export const server = app.listen(port, address, () => {
+    const userFriendlyAddress = address === '0.0.0.0' && !process.env.LISTEN_ADDRESS ? 'localhost' : address;
+    console.log(`⚡️ Server is running at http://${userFriendlyAddress}:${port}`);
 });
 
 const shutdown = () => {
