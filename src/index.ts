@@ -113,7 +113,8 @@ app.all('*', async (req: Request, res: Response, next) => {
 });
 
 const server = app.listen(port, address, () => {
-    console.log(`⚡️ Server is running at http://${address}:${port}`);
+    const userFriendlyAddress = address === '0.0.0.0' ? 'localhost' : address;
+    console.log(`⚡️ Server is running at http://${userFriendlyAddress}:${port}`);
 });
 
 const shutdown = () => {
