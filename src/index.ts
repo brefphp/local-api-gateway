@@ -5,6 +5,7 @@ import queue from 'express-queue';
 import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/client-lambda';
 import { httpRequestToEvent } from './apiGateway';
+import bodyParser from 'body-parser';
 
 const app = express();
 const address = process.env.LISTEN_ADDRESS || '0.0.0.0';
@@ -49,18 +50,14 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     res.status(500).send('Something broke!');
 });
 
-// Populate `req.body` with the raw body content (string)
+// Populate `req.body` with the raw body content (buffer).
+// We use a Buffer to avoid issues with binrary data during file upload.
 // See https://stackoverflow.com/a/18710277/245552
-app.use(function (req, res, next) {
-    req.body = '';
-    req.setEncoding('utf8');
-    req.on('data', function (chunk) {
-        req.body += chunk;
-    });
-    req.on('end', function () {
-        next();
-    });
-});
+app.use(bodyParser.raw({
+    inflate: true,
+    limit: '10mb',
+    type: '*/*'
+}));
 
 app.all('*', async (req: Request, res: Response, next) => {
     const event = httpRequestToEvent(req);
