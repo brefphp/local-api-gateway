@@ -82,6 +82,25 @@ describe('server', () => {
         expect(getEventFromLambdaApiCall(lambda, 0).body).toBe('Hello world');
     });
 
+    it('forwards the body as base64 containing binary data (file upload)', async () => {
+        const csvBuffer = Buffer.from('Col1,Col2\nVal1,Val2');
+        const response = await request(app).post('/').attach('file', csvBuffer, 'file.csv');
+        expect(response.status).toEqual(200);
+
+        const lambdaEvent = getEventFromLambdaApiCall(lambda, 0);
+
+        expect(lambdaEvent.requestContext.http.method).toBe('POST');
+        expect(lambdaEvent.isBase64Encoded).toBe(true);
+        expect(lambdaEvent.headers['content-type']).toContain('multipart/form-data');
+
+        const lambdaBody = Buffer.from(lambdaEvent.body, 'base64').toString('utf8');
+
+        expect(lambdaBody).toContain('Content-Type: text/csv');
+        expect(lambdaBody).toContain('Content-Disposition: form-data;');
+        expect(lambdaBody).toContain('Col1,Col2');
+        expect(lambdaBody).toContain('Val1,Val2');
+    });
+
     it('forwards headers', async () => {
         const response = await request(app).get('/').set('X-My-Header', 'foo');
         expect(response.status).toEqual(200);

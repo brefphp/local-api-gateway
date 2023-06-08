@@ -51,7 +51,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Populate `req.body` with the raw body content (buffer).
-// We use a Buffer to avoid issues with binrary data during file upload.
+// We use a Buffer to avoid issues with binary data during file upload.
 // See https://stackoverflow.com/a/18710277/245552
 app.use(bodyParser.raw({
     inflate: true,
