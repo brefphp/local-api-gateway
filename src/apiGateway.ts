@@ -34,6 +34,9 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
         }
     );
 
+    const bodyString = request.method === 'GET' ? '' : request.body.toString('utf8');
+    const shouldSendBase64 = request.method === 'GET' ? false : bodyString.includes('Content-Disposition: form-data');
+
     return {
         version: '2.0',
         routeKey: '$default',
@@ -47,9 +50,9 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
             ...headers,
         },
         queryStringParameters,
-        body: request.body,
+        body: shouldSendBase64 ? request.body.toString('base64') : bodyString,
         pathParameters: {},
-        isBase64Encoded: false,
+        isBase64Encoded: shouldSendBase64,
         stageVariables: {},
         requestContext: {
             http: {
