@@ -50,6 +50,8 @@ services:
             - .:/var/task:ro
 ```
 
+If you need to change the default listening port, you can set the `LISTEN_PORT` environment variable value to whatever port you wish to use.
+
 ## Static assets
 
 If you want a quick and easy way to serve static assets, mount your files in the `bref/local-api-gateway` container and set the `DOCUMENT_ROOT` env var to the root of the assets.
