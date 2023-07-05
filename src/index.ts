@@ -6,6 +6,7 @@ import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/client-lambda';
 import { httpRequestToEvent } from './apiGateway';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const address = process.env.LISTEN_ADDRESS || '0.0.0.0';
@@ -58,6 +59,8 @@ app.use(bodyParser.raw({
     limit: '10mb',
     type: '*/*'
 }));
+
+app.use(cookieParser());
 
 app.all('*', async (req: Request, res: Response, next) => {
     const event = httpRequestToEvent(req);
