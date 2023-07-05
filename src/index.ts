@@ -59,7 +59,6 @@ app.use(bodyParser.raw({
     type: '*/*'
 }));
 
-
 app.all('*', async (req: Request, res: Response, next) => {
     const event = httpRequestToEvent(req);
 
