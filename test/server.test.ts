@@ -30,7 +30,7 @@ describe('server', () => {
         expect(getEventFromLambdaApiCall(lambda, 0)).toStrictEqual({
             version: '2.0',
             body: '',
-            cookies: {},
+            cookies: [],
             headers: {
                 'accept-encoding': 'gzip, deflate',
                 connection: 'close',

@@ -37,12 +37,14 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
     const bodyString = request.method === 'GET' ? '' : request.body.toString('utf8');
     const shouldSendBase64 = request.method === 'GET' ? false : bodyString.includes('Content-Disposition: form-data');
 
+    const cookies = request.headers.cookie ? request.headers.cookie.split('; ') : [];
+
     return {
         version: '2.0',
         routeKey: '$default',
         rawPath: request.path,
         rawQueryString: url.parse(request.originalUrl).query ?? '',
-        cookies: request.cookies,
+        cookies: cookies,
         headers: {
             'x-forwarded-proto': request.protocol,
             'x-forwarded-port': `${request.socket.localPort}`,
