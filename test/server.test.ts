@@ -30,6 +30,7 @@ describe('server', () => {
         expect(getEventFromLambdaApiCall(lambda, 0)).toStrictEqual({
             version: '2.0',
             body: '',
+            cookies: [],
             headers: {
                 'accept-encoding': 'gzip, deflate',
                 connection: 'close',
@@ -61,6 +62,26 @@ describe('server', () => {
             routeKey: '$default',
             stageVariables: {},
         });
+    });
+
+    it('handles cookies', async () => {
+        const response = await request(app)
+          .get('/')
+          .set('Cookie', ['cookie1=a', 'cookie2=b']);
+
+        const lambdaPayload = getEventFromLambdaApiCall(lambda, 0);
+
+        expect(lambdaPayload.cookies).toEqual(['cookie1=a', 'cookie2=b']);
+    });
+
+    it('handles cookies with `;` on it', async () => {
+        const response = await request(app)
+          .get('/')
+          .set('Cookie', ['cookie1=a;b', 'cookie2=c;d']);
+
+        const lambdaPayload = getEventFromLambdaApiCall(lambda, 0);
+
+        expect(lambdaPayload.cookies).toEqual(['cookie1=a;b', 'cookie2=c;d']);
     });
 
     it('sets cookies', async () => {
