@@ -40,6 +40,10 @@ services:
         environment:
             # <host>:<port> -> the host here is "php" because that's the name of the second container
             TARGET: 'php:8080'
+            # Binds and listens for connections on the specified host and port. 0.0.0.0:8000 is the defailt configuration.
+            # E.g. you can set LISTEN_PORT to 443 if you have issues to make https requests work.
+            # LISTEN_ADDRESS: '0.0.0.0' 
+            # LISTEN_PORT: 8000
             
     # Example of container running AWS Lambda locally
     php:
