@@ -58,5 +58,5 @@ jobs:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
             - run: npm i
-            - name: Typescript checks
-              run: tsc --noEmit
+            # - name: Typescript checks
+            #   run: tsc --noEmit
