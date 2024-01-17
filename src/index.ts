@@ -10,6 +10,7 @@ import bodyParser from 'body-parser';
 const app = express();
 const address = process.env.LISTEN_ADDRESS || '0.0.0.0';
 const port = Number(process.env.LISTEN_PORT) || 8000;
+const eventVersion = process.env.API_GATEWAY_EVENT_VERSION || '2';
 
 if (process.env.DOCUMENT_ROOT) {
     app.use(express.static(process.env.DOCUMENT_ROOT));
@@ -60,8 +61,6 @@ app.use(bodyParser.raw({
 }));
 
 app.all('*', async (req: Request, res: Response, next) => {
-    const eventVersion = process.env.API_GATEWAY_EVENT_VERSION || '2'; // Default to v2 if not specified
-
     const event = httpRequestToEvent(req, eventVersion);
 
     let result: InvokeCommandOutput;
