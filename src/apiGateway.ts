@@ -3,7 +3,7 @@ import * as url from 'url';
 import { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from 'aws-lambda/trigger/api-gateway-proxy';
 import QueryString from 'qs';
 
-export function httpRequestToEvent(request: Request, version:string): APIGatewayProxyEvent | APIGatewayProxyEventV2 {
+export function httpRequestToEvent(request: Request, version?: string): APIGatewayProxyEvent | APIGatewayProxyEventV2 {
     const headers = objectMap(request.headers, (value): string | undefined => {
         if (Array.isArray(value)) {
             return value.join(',');
