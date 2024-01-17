@@ -1,9 +1,9 @@
 import { Request } from 'express';
 import * as url from 'url';
-import { APIGatewayProxyEventV2 } from 'aws-lambda/trigger/api-gateway-proxy';
+import { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from 'aws-lambda/trigger/api-gateway-proxy';
 import QueryString from 'qs';
 
-export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
+export function httpRequestToEvent(request: Request, version:string): APIGatewayProxyEvent | APIGatewayProxyEventV2 {
     const headers = objectMap(request.headers, (value): string | undefined => {
         if (Array.isArray(value)) {
             return value.join(',');
@@ -38,6 +38,44 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
     const shouldSendBase64 = request.method === 'GET' ? false : bodyString.includes('Content-Disposition: form-data');
 
     const cookies = request.headers.cookie ? request.headers.cookie.split('; ') : [];
+    if (version === "1") {
+        return {
+            version: '1.0',
+            resource: request.path,
+            path: request.path,
+            httpMethod: request.method,
+            headers: {
+                'x-forwarded-proto': request.protocol,
+                'x-forwarded-port': `${request.socket.localPort}`,
+                'x-forwarded-for': request.ip,
+                ...headers,
+            },
+            queryStringParameters,
+            requestContext: {
+                http: {
+                    method: request.method,
+                    path: request.path,
+                    protocol: request.protocol,
+                    sourceIp: request.ip,
+                    userAgent: request.header('User-Agent') ?? '',
+                },
+                accountId: '123456789012',
+                apiId: 'api-id',
+                domainName: 'localhost',
+                domainPrefix: '',
+                requestId: 'id',
+                routeKey: '$default',
+                stage: '$default',
+                time: new Date().toISOString(),
+                timeEpoch: Date.now(),
+            },
+            pathParameters: {},
+            stageVariables: {},
+            body: shouldSendBase64 ? request.body.toString('base64') : bodyString,
+            isBase64Encoded: shouldSendBase64,
+            cookies: cookies,
+        };
+    }
 
     return {
         version: '2.0',

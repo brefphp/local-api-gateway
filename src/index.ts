@@ -60,7 +60,9 @@ app.use(bodyParser.raw({
 }));
 
 app.all('*', async (req: Request, res: Response, next) => {
-    const event = httpRequestToEvent(req);
+    const eventVersion = process.env.API_GATEWAY_EVENT_VERSION || '2'; // Default to v2 if not specified
+
+    const event = httpRequestToEvent(req, eventVersion);
 
     let result: InvokeCommandOutput;
     try {
