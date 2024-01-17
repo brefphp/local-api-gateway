@@ -6,12 +6,12 @@ ENV AWS_SECRET_ACCESS_KEY='fake'
 
 WORKDIR /app
 COPY package.json package.json
-RUN npm install --production
-# COPY src src
+RUN npm install --production && grunt
+COPY dist dist
 
 # To support mounted assets
 WORKDIR /var/task
 
 EXPOSE 8000
 
-CMD ["node", "/app/index.js"]
+CMD ["node", "/app/dist/index.js"]
