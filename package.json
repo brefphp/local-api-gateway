@@ -1,15 +1,15 @@
 {
-  "name": "@cacorrea.sh/local-api-gateway",
+  "name": "@bref.sh/local-api-gateway",
   "version": "1.0.18",
   "description": "Run API Gateway locally against your Docker Lambda functions",
-  "repository": "cacorrea-bci/local-api-gateway",
+  "repository": "brefphp/local-api-gateway",
   "main": "dist/index.js",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc && docker buildx build --load -t cacorrea/local-api-gateway .",
-    "docker-publish": "npm run build && docker buildx build --push --platform linux/amd64,linux/arm64 -t cacorrea/local-api-gateway .",
+    "build": "tsc && docker buildx build --load -t bref/local-api-gateway .",
+    "docker-publish": "npm run build && docker buildx build --push --platform linux/amd64,linux/arm64 -t bref/local-api-gateway .",
     "lint": "eslint .",
     "test": "vitest"
   },
