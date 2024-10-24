@@ -34,7 +34,7 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
         }
     );
 
-    const bodyString = request.body.toString('utf8');
+    const bodyString = Buffer.isBuffer(request.body) ? request.body.toString('utf8') : '';
     const shouldSendBase64 = request.method === 'GET' ? false : bodyString.includes('Content-Disposition: form-data');
 
     const cookies = request.headers.cookie ? request.headers.cookie.split('; ') : [];
