@@ -34,7 +34,7 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
         }
     );
 
-    const bodyString = request.method === 'GET' ? '' : request.body.toString('utf8');
+    const bodyString = Buffer.isBuffer(request.body) ? request.body.toString('utf8') : '';
     const shouldSendBase64 = request.method === 'GET' ? false : bodyString.includes('Content-Disposition: form-data');
 
     const cookies = request.headers.cookie ? request.headers.cookie.split('; ') : [];
@@ -61,7 +61,7 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
                 method: request.method,
                 path: request.path,
                 protocol: request.protocol,
-                sourceIp: request.ip,
+                sourceIp: String(request.ip),
                 userAgent: request.header('User-Agent') ?? '',
             },
             accountId: '123456789012',
