@@ -1,0 +1,29 @@
+name: Staging Deploy
+on:
+  - pull_request
+jobs:
+  stage-deploy:
+    name: Deploy (stage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Install Infra Dependencies
+        run: pip install -r requirements.txt
+        working-directory: infra
+      - name: Deploy using pulumi up
+        uses: pulumi/actions@v3
+        with:
+          command: up
+          stack-name: fernlea/local-api-gateway/prod
+          work-dir: infra
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
