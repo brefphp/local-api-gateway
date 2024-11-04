@@ -7,6 +7,6 @@ ENV AWS_SECRET_ACCESS_KEY='fake'
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install --verbose && npm cache clean --force
+RUN npm install && npm cache clean --force
 
 COPY . .
