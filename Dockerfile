@@ -1,17 +1,12 @@
-FROM node:18-alpine
+FROM node:18-alpine as base
 
 # Fake AWS credentials so that the Lambda client works
 ENV AWS_ACCESS_KEY_ID='fake'
 ENV AWS_SECRET_ACCESS_KEY='fake'
 
 WORKDIR /app
-COPY package.json package.json
-RUN npm install --production
-COPY dist dist
 
-# To support mounted assets
-WORKDIR /var/task
+COPY package.json ./
+RUN npm install --verbose && npm cache clean --force
 
-EXPOSE 8000
-
-CMD ["node", "/app/dist/index.js"]
+COPY . .
