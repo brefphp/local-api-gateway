@@ -1,9 +1,9 @@
 import { Request } from 'express';
 import * as url from 'url';
-import { APIGatewayProxyEventV2 } from 'aws-lambda/trigger/api-gateway-proxy';
+import { APIGatewayProxyEvent } from 'aws-lambda/trigger/api-gateway-proxy';
 import QueryString from 'qs';
 
-export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
+export function httpRequestToEvent(request: Request): APIGatewayProxyEvent {
     const headers = objectMap(request.headers, (value): string | undefined => {
         if (Array.isArray(value)) {
             return value.join(',');
@@ -40,11 +40,10 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
     const cookies = request.headers.cookie ? request.headers.cookie.split('; ') : [];
 
     return {
-        version: '2.0',
-        routeKey: '$default',
-        rawPath: request.path,
-        rawQueryString: url.parse(request.originalUrl).query ?? '',
-        cookies: cookies,
+        resource: "/{proxy+}",
+        path: request.path,
+        httpMethod: request.method,
+        multiValueHeaders: {"fake": []},
         headers: {
             'x-forwarded-proto': request.protocol,
             'x-forwarded-port': `${request.socket.localPort}`,
@@ -52,18 +51,33 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
             ...headers,
         },
         queryStringParameters,
+        multiValueQueryStringParameters: {},
         body: shouldSendBase64 ? request.body.toString('base64') : bodyString,
         pathParameters: {},
         isBase64Encoded: shouldSendBase64,
         stageVariables: {},
         requestContext: {
-            http: {
-                method: request.method,
-                path: request.path,
-                protocol: request.protocol,
+            httpMethod: request.method,
+            path: request.path,
+            protocol: request.protocol,
+            identity: {
                 sourceIp: String(request.ip),
+                user: null,
+                accessKey: null,
+                accountId: null,
+                apiKey: null,
+                apiKeyId: null,
+                caller: null,
+                clientCert: null,
+                cognitoAuthenticationProvider: null,
+                cognitoAuthenticationType: null,
+                cognitoIdentityId: null,
+                cognitoIdentityPoolId: null,
+                principalOrgId: null,
+                userArn: null,
                 userAgent: request.header('User-Agent') ?? '',
             },
+            authorizer: null,
             accountId: '123456789012',
             apiId: 'api-id',
             domainName: 'localhost',
@@ -71,8 +85,10 @@ export function httpRequestToEvent(request: Request): APIGatewayProxyEventV2 {
             requestId: 'id',
             routeKey: '$default',
             stage: '$default',
-            time: new Date().toISOString(),
-            timeEpoch: Date.now(),
+            requestTime: new Date().toISOString(),
+            requestTimeEpoch: Date.now(),
+            resourceId: '',
+            resourcePath: ''
         },
     };
 }
