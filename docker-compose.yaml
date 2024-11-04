@@ -1,0 +1,22 @@
+services:
+      # This container runs API Gateway locally
+  api_gateway:
+    build:
+      context: local-api-gateway
+      dockerfile: Dockerfile
+      target: base
+    ports: ['8000:8000']
+    expose:
+      - '8000'
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./local-api-gateway
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+    command: npm run dev
+    environment:
+        # <host>:<port> -> the host here is "php" because that's the name of the second container
+        TARGET: 'api:8080'
