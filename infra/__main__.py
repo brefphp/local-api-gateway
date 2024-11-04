@@ -69,6 +69,10 @@ local_api_gateway_repo_lifecycle_policy = aws.ecr.LifecyclePolicy(
 local_api_gateway_image = awsx.ecr.Image(
     resource_name=f"{stack}-local-api-gateway-image",
     repository_url=local_api_gateway_repository.repository_url,
-    context="../local-api-gateway",
-    dockerfile="../local-api-gateway/Dockerfile",
+    context="../",
+    dockerfile="../Dockerfile",
+)
+
+pulumi.export(
+    f"{stack}-local-api-gateway-image-name", local_api_gateway_image.image_uri
 )
