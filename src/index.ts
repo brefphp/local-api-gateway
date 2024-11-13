@@ -6,8 +6,10 @@ import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/client-lambda';
 import { httpRequestToEvent } from './apiGateway';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const app = express();
+app.use(cors());
 const address = process.env.LISTEN_ADDRESS || '0.0.0.0';
 const port = Number(process.env.LISTEN_PORT) || 8000;
 
