@@ -8,8 +8,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && docker buildx build --load -t bref/local-api-gateway .",
+    "code-build": "tsc",
+    "docker-build": "docker buildx build --load -t bref/local-api-gateway .",
     "docker-publish": "npm run build && docker buildx build --push --platform linux/amd64,linux/arm64 -t bref/local-api-gateway .",
+    "build": "code-build && docker-build",
     "lint": "eslint .",
     "test": "vitest"
   },
