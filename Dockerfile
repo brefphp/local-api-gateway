@@ -4,6 +4,9 @@ FROM node:18-alpine
 ENV AWS_ACCESS_KEY_ID='fake'
 ENV AWS_SECRET_ACCESS_KEY='fake'
 
+# Install Docker CLI
+RUN apk add --no-cache docker-cli
+
 WORKDIR /app
 COPY package.json package.json
 RUN npm install --production

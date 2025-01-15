@@ -74,6 +74,28 @@ services:
     # ...
 ```
 
+## Using `docker exec` to run multiple commands at once
+
+Normally local-api-gateway runs using the official Lambda RIE, which only supports a single execution at a time. To support 
+concurrent execution you can switch to use Docker Exec.   
+
+```yaml
+services:
+  web:
+    image: bref/local-api-gateway
+    ports: ['8000:8000']
+    volumes:
+      - .:/var/task:ro
+    environment:
+      TARGET: 'php:8080'
+      TARGET_CONTAINER: 'my-php-container' # if different to 'php' above
+      TARGET_HANDLER: '/path/to/vendor/bin/bref-local handler.php' # here, handler.php is in /var/task and bref-local is elsewhere
+```
+
+## Logging
+
+You can log the processing for visibility during development by setting `LOG_LEVEL` to one of `none`, `info` or `debug`.
+
 ## FAQ
 
 ### This vs Serverless Offline
@@ -96,6 +118,13 @@ No, this is a very simple HTTP server. It does not support API Gateway features 
 
 ### How are parallel requests handled?
 
-The Lambda RIE does not support parallel requests. This project handles them by "queueing" requests. If a request is already being processed, the next request will be queued and processed when the first request is done.
+This system offers two execution modes:
 
+- Lambda RIE: one request runs at a time, queuing additional requests
+- Docker Exec: handles parallel requests
+
+The Lambda RIE does not support parallel requests. This project handles them by "queueing" requests. If a request is already being processed, the next request will be queued and processed when the first request is done.
 This works up to 10 requests in parallel by default. You can change this limit by setting the `DEV_MAX_REQUESTS_IN_PARALLEL` environment variable.
+
+The Docker Exec mode fires `docker exec` on the target container for each request, so can handle parallel requests up to the limits in the target container. Although useful for development, keep in mind that this is not the same as parallel requests in AWS Lambda, as in AWS each Lambda function runs as a single isolated request.  
+To activate this mode, define `TARGET_CONTAINER` and `TARGET_HANDLER` environment variables.

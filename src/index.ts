@@ -2,9 +2,11 @@ import express, { NextFunction, Request, Response } from 'express';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import queue from 'express-queue';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/client-lambda';
-import { httpRequestToEvent } from './apiGateway';
+import { httpRequestToEvent } from './apiGateway.js';
 import bodyParser from 'body-parser';
 
 const app = express();
@@ -14,6 +16,10 @@ const port = Number(process.env.LISTEN_PORT) || 8000;
 if (process.env.DOCUMENT_ROOT) {
     app.use(express.static(process.env.DOCUMENT_ROOT));
 }
+
+// Logging levels: 'none', 'info', 'debug'
+const doInfoLogging = ['info', 'debug'].includes(process.env.LOG_LEVEL ?? 'none');
+const doDebugLogging = process.env.LOG_LEVEL === 'debug';
 
 // Prevent parallel requests as Lambda RIE can only handle one request at a time
 // The solution here is to use a request "queue":
@@ -35,11 +41,28 @@ const requestQueue = queue({
 app.use(requestQueue);
 
 const target = process.env.TARGET;
-if (!target) {
+if (!target || !target.includes(":")) {
     throw new Error(
         'The TARGET environment variable must be set and contain the domain + port of the target lambda container (for example, "localhost:9000")'
     );
 }
+
+// Determine whether to use Docker CLI or AWS Lambda RIE for execution
+const dockerHost = process.env.TARGET_CONTAINER ?? target.split(":")[0];
+const dockerHandler = process.env.TARGET_HANDLER;
+const mode = (dockerHost && dockerHandler) ? "docker": "rie";
+if (doInfoLogging) {
+    if (mode === "docker") {
+        console.log(`Using docker CLI on '${dockerHost}' via '${dockerHandler}'`);
+    } else {
+        console.log("Using AWS Lambda RIE environment - set TARGET_CONTAINER and TARGET_HANDLER environment variables to enable docker CLI mode");
+    }
+}
+const isBrefLocalHandler = dockerHandler?.includes('bref-local') ?? false;
+
+// Create an async version of exec() for calling Docker
+const asyncExec = promisify(exec);
+
 const client = new LambdaClient({
     region: 'us-east-1',
     endpoint: `http://${target}`,
@@ -62,25 +85,65 @@ app.use(bodyParser.raw({
 app.all('*', async (req: Request, res: Response, next) => {
     const event = httpRequestToEvent(req);
 
-    let result: InvokeCommandOutput;
+    let result: string;
+    const requestContext = event?.requestContext?.http ?? {};
     try {
-        result = await client.send(
-            new InvokeCommand({
+        const payload = Buffer.from(JSON.stringify(event)).toString();
+        if (doInfoLogging) {
+            console.log(`START [${mode.toUpperCase()}] ${requestContext?.method} ${requestContext?.path}`, payload);
+        }
+
+        if (mode === "docker") {
+            const payloadAsEscapedJson = payload.replace("'", "\\'");
+            const dockerCommand = `/usr/bin/docker exec ${dockerHost} ${dockerHandler} '${payloadAsEscapedJson}'`;
+            const {stdout, stderr} = await asyncExec(dockerCommand);
+            result = Buffer.from(stdout).toString();
+
+            if (isBrefLocalHandler) {
+                // The 'bref-local' handler returns the following, which needs to be stripped:
+                // START
+                // END Duration XXXXX
+                // (blank line)
+                // ...real output...
+                result = result
+                    .split('\n') // Split the output into lines
+                    .slice(3)    // Skip the first three lines
+                    .join('\n'); // Join the remaining lines back together
+            }
+            if (doInfoLogging) {
+                console.log(`END [DOCKER] ${requestContext?.method} ${requestContext?.path}`, result);
+                if (doDebugLogging) {
+                    console.log(`END [DOCKER] CMD `, dockerCommand);
+                    console.log(`END [DOCKER] STDOUT`, stdout);
+                    if (stderr) {
+                        console.error(`END [DOCKER] STDERR: ${stderr}`);
+                    }
+                }
+            }
+        } else {
+            const invokeCommand = new InvokeCommand({
                 FunctionName: 'function',
-                Payload: Buffer.from(JSON.stringify(event)),
+                Payload: payload,
                 InvocationType: InvocationType.RequestResponse,
-            })
-        );
+            });
+            const invokeResponse: InvokeCommandOutput = await client.send(invokeCommand);
+            result = String(invokeResponse.Payload);
+            if (doDebugLogging) {
+                console.log(`END [RIE] ${requestContext?.method} ${requestContext?.path}`, result);
+            }
+        }
+
     } catch (e) {
+        console.error(`END [ERROR] ${requestContext?.method} ${requestContext?.path}`, e);
         res.send(JSON.stringify(e));
 
         return next(e);
     }
 
-    if (!result.Payload) {
+    if (!result) {
         return res.status(500).send('No payload in Lambda response');
     }
-    const payload = Buffer.from(result.Payload).toString();
+    const payload = Buffer.from(result).toString();
     let lambdaResponse: APIGatewayProxyStructuredResultV2;
     try {
         lambdaResponse = JSON.parse(payload) as APIGatewayProxyStructuredResultV2;
