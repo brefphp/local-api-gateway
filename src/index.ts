@@ -2,11 +2,10 @@ import express, { NextFunction, Request, Response } from 'express';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import queue from 'express-queue';
-import { promisify } from 'util';
-import { exec } from 'child_process';
 import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { InvocationType, InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/client-lambda';
 import { httpRequestToEvent } from './apiGateway.js';
+import { runDockerCommand } from "./docker";
 import bodyParser from 'body-parser';
 
 const app = express();
@@ -30,7 +29,7 @@ const doDebugLogging = process.env.LOG_LEVEL === 'debug';
 
 // Determine whether to use Docker CLI or AWS Lambda RIE for execution
 const dockerHost = process.env.TARGET_CONTAINER ?? target.split(":")[0];
-const dockerHandler = process.env.TARGET_HANDLER;
+const dockerHandler = process.env.TARGET_HANDLER ?? '';
 const mode = (dockerHost && dockerHandler) ? "docker": "rie";
 if (doInfoLogging) {
     if (mode === "docker") {
@@ -39,7 +38,6 @@ if (doInfoLogging) {
         console.log("Using AWS Lambda RIE environment - set TARGET_CONTAINER and TARGET_HANDLER environment variables to enable docker CLI mode");
     }
 }
-const isBrefLocalHandler = dockerHandler?.includes('bref-local') ?? false;
 const maxParallelRequests = process.env.DEV_MAX_REQUESTS_IN_PARALLEL ?? 10;
 const maxQueuedRequests = process.env.DEV_MAX_REQUESTS_IN_QUEUE ?? -1;
 
@@ -61,9 +59,6 @@ const requestQueue = queue({
     },
 });
 app.use(requestQueue);
-
-// Create an async version of exec() for calling Docker
-const asyncExec = promisify(exec);
 
 const client = new LambdaClient({
     region: 'us-east-1',
@@ -92,37 +87,13 @@ app.all('*', async (req: Request, res: Response, next) => {
     try {
         const payload = Buffer.from(JSON.stringify(event)).toString();
         if (doInfoLogging) {
-            console.log(`START [${mode.toUpperCase()}] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? payload : null);
+            console.log(`START [${mode.toUpperCase()}] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? payload : '');
         }
-
         if (mode === "docker") {
-            const payloadAsEscapedJson = payload.replace("'", "\\'");
-            const dockerCommand = `/usr/bin/docker exec ${dockerHost} ${dockerHandler} '${payloadAsEscapedJson}'`;
-            const {stdout, stderr} = await asyncExec(dockerCommand);
-            result = Buffer.from(stdout).toString();
-
-            if (isBrefLocalHandler) {
-                // The 'bref-local' handler returns the following, which needs to be stripped:
-                // START
-                // END Duration XXXXX
-                // (blank line)
-                // ...real output...
-                result = result
-                    .split('\n') // Split the output into lines
-                    .slice(3)    // Skip the first three lines
-                    .join('\n'); // Join the remaining lines back together
-            }
-            if (doInfoLogging) {
-                console.log(`END [DOCKER] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? result : null);
-                if (doDebugLogging) {
-                    console.log(`END [DOCKER] CMD `, dockerCommand);
-                    console.log(`END [DOCKER] STDOUT`, stdout);
-                    if (stderr) {
-                        console.error(`END [DOCKER] STDERR: ${stderr}`);
-                    }
-                }
-            }
+            // Run via Docker
+            result = await runDockerCommand(dockerHost, dockerHandler, payload);
         } else {
+            // Run via Lambda RIE SDK
             const invokeCommand = new InvokeCommand({
                 FunctionName: 'function',
                 Payload: payload,
@@ -130,9 +101,9 @@ app.all('*', async (req: Request, res: Response, next) => {
             });
             const invokeResponse: InvokeCommandOutput = await client.send(invokeCommand);
             result = String(invokeResponse.Payload);
-            if (doDebugLogging) {
-                console.log(`END [RIE] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? result : null);
-            }
+        }
+        if (doInfoLogging) {
+            console.log(`END [${mode.toUpperCase()}] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? result : `${result.length} bytes`);
         }
 
     } catch (e) {
