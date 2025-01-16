@@ -17,35 +17,16 @@ if (process.env.DOCUMENT_ROOT) {
     app.use(express.static(process.env.DOCUMENT_ROOT));
 }
 
-// Logging levels: 'none', 'info', 'debug'
-const doInfoLogging = ['info', 'debug'].includes(process.env.LOG_LEVEL ?? 'none');
-const doDebugLogging = process.env.LOG_LEVEL === 'debug';
-
-// Prevent parallel requests as Lambda RIE can only handle one request at a time
-// The solution here is to use a request "queue":
-// incoming requests are queued until the previous request is finished.
-// See https://github.com/brefphp/bref/issues/1471
-const requestQueue = queue({
-    // max requests to process simultaneously
-    activeLimit: 1,
-    // max requests in queue until reject (-1 means do not reject)
-    queuedLimit: process.env.DEV_MAX_REQUESTS_IN_PARALLEL ?? 10,
-    // handler to call when queuedLimit is reached (see below)
-    rejectHandler: (req: Request, res: Response) => {
-        res.status(503);
-        res.send(
-            'Too many requests in parallel, set the `DEV_MAX_REQUESTS_IN_PARALLEL` environment variable to increase the limit'
-        );
-    },
-});
-app.use(requestQueue);
-
 const target = process.env.TARGET;
 if (!target || !target.includes(":")) {
     throw new Error(
         'The TARGET environment variable must be set and contain the domain + port of the target lambda container (for example, "localhost:9000")'
     );
 }
+
+// Logging levels: 'none', 'info', 'debug'
+const doInfoLogging = ['info', 'debug'].includes(process.env.LOG_LEVEL ?? 'none');
+const doDebugLogging = process.env.LOG_LEVEL === 'debug';
 
 // Determine whether to use Docker CLI or AWS Lambda RIE for execution
 const dockerHost = process.env.TARGET_CONTAINER ?? target.split(":")[0];
@@ -59,6 +40,27 @@ if (doInfoLogging) {
     }
 }
 const isBrefLocalHandler = dockerHandler?.includes('bref-local') ?? false;
+const maxParallelRequests = process.env.DEV_MAX_REQUESTS_IN_PARALLEL ?? 10;
+const maxQueuedRequests = process.env.DEV_MAX_REQUESTS_IN_QUEUE ?? -1;
+
+// Prevent parallel requests as Lambda RIE can only handle one request at a time
+// The solution here is to use a request "queue":
+// incoming requests are queued until the previous request is finished.
+// See https://github.com/brefphp/bref/issues/1471
+const requestQueue = queue({
+    // max requests to process simultaneously (set to 1 for RIE mode)
+    activeLimit: (mode === "docker") ? maxParallelRequests : 1,
+    // max requests in queue until reject (-1 means do not reject)
+    queuedLimit: maxQueuedRequests,
+    // handler to call when queuedLimit is reached (see below)
+    rejectHandler: (req: Request, res: Response) => {
+        res.status(503);
+        res.send(
+            'Too many requests in parallel, set the `DEV_MAX_REQUESTS_IN_PARALLEL` and `DEV_MAX_REQUESTS_IN_QUEUE` environment variables to control the limit'
+        );
+    },
+});
+app.use(requestQueue);
 
 // Create an async version of exec() for calling Docker
 const asyncExec = promisify(exec);
@@ -90,7 +92,7 @@ app.all('*', async (req: Request, res: Response, next) => {
     try {
         const payload = Buffer.from(JSON.stringify(event)).toString();
         if (doInfoLogging) {
-            console.log(`START [${mode.toUpperCase()}] ${requestContext?.method} ${requestContext?.path}`, payload);
+            console.log(`START [${mode.toUpperCase()}] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? payload : null);
         }
 
         if (mode === "docker") {
@@ -111,7 +113,7 @@ app.all('*', async (req: Request, res: Response, next) => {
                     .join('\n'); // Join the remaining lines back together
             }
             if (doInfoLogging) {
-                console.log(`END [DOCKER] ${requestContext?.method} ${requestContext?.path}`, result);
+                console.log(`END [DOCKER] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? result : null);
                 if (doDebugLogging) {
                     console.log(`END [DOCKER] CMD `, dockerCommand);
                     console.log(`END [DOCKER] STDOUT`, stdout);
@@ -129,7 +131,7 @@ app.all('*', async (req: Request, res: Response, next) => {
             const invokeResponse: InvokeCommandOutput = await client.send(invokeCommand);
             result = String(invokeResponse.Payload);
             if (doDebugLogging) {
-                console.log(`END [RIE] ${requestContext?.method} ${requestContext?.path}`, result);
+                console.log(`END [RIE] ${requestContext?.method} ${requestContext?.path}`, doDebugLogging ? result : null);
             }
         }
 

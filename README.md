@@ -87,9 +87,11 @@ services:
     volumes:
       - .:/var/task:ro
     environment:
-      TARGET: 'php:8080'
-      TARGET_CONTAINER: 'my-php-container' # if different to 'php' above
-      TARGET_HANDLER: '/path/to/vendor/bin/bref-local handler.php' # here, handler.php is in /var/task and bref-local is elsewhere
+      TARGET: 'php:8080' # service:port
+      TARGET_CONTAINER: 'my-php-container' # specify if different to the host within TARGET
+      TARGET_HANDLER: '/path/to/vendor/bin/bref-local handler.php' # The handler within /var/task; bref-local can be elsewhere
+      DEV_MAX_REQUESTS_IN_PARALLEL: 10 # number to run simultaneously
+      DEV_MAX_REQUESTS_IN_QUEUE: 20 # number to queue when capacity is reached
 ```
 
 ## Logging
