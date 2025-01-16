@@ -85,6 +85,7 @@ services:
     image: bref/local-api-gateway
     ports: ['8000:8000']
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - .:/var/task:ro
     environment:
       TARGET: 'php:8080' # service:port
