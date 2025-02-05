@@ -35,6 +35,24 @@ const asyncSpawn = (command: string, args: string[]): Promise<{ stdout: string; 
 };
 
 /**
+ * Handles bref-local output headers
+ *
+ * The 'bref-local' handler returns the following header which needs to be stripped:
+ * v
+ * START
+ * END Duration ...
+ *
+ * ^
+ * (real output begins under this line)
+ *
+ * @param input
+ */
+function removeBrefLocalHeaders(input: string): string {
+    const match = input.match(/END Duration:.*\n([\s\S]*)/);
+    return match ? match[1].trim() : "";
+}
+
+/**
  * Runs the Docker Exec command
  *
  * @param container The docker container name (e.g. 'php')
@@ -69,18 +87,7 @@ export const runDockerCommand = async (container: string, handler: string, paylo
 
     // Strip header info from bref-local output
     if (handler?.includes('bref-local')) {
-        // The 'bref-local' handler returns the following header which needs to be stripped:
-        // v
-        // START
-        // END Duration ...
-        //
-        // ^
-        // (real output begins under this line)
-        //
-        result = result
-            .split('\n') // Split the output into lines
-            .slice(3)    // Skip the first three lines
-            .join('\n'); // Join the remaining lines back together
+        result = removeBrefLocalHeaders(result);
     }
 
     return result;
