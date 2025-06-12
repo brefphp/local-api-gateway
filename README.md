@@ -1,3 +1,11 @@
+## Fork
+
+This is a fork of [bref/local-api-gateway](https://github.com/bref/local-api-gateway). 
+
+This version provides Docker parallelisation, with the new `TARGET_CONTAINER` and `TARGET_HANDLER` variables as documented below.
+
+## Original content
+
 This project lets you run HTTP Lambda applications locally.
 
 ## Why
